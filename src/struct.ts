@@ -7,8 +7,12 @@ import { StructError, Failure } from './error.js'
  * validate unknown input data against the struct.
  */
 
-export class Struct<T = unknown, S = unknown> {
+export class Struct<T = unknown, S = unknown, R = T> {
   readonly TYPE!: T
+  /**
+   * Type without coercions
+   */
+  readonly TYPE_RAW!: R
   type: string
   schema: S
   coercer: (value: unknown, context: Context) => unknown
@@ -25,7 +29,7 @@ export class Struct<T = unknown, S = unknown> {
     coercer?: Coercer
     validator?: Validator
     refiner?: Refiner<T>
-    entries?: Struct<T, S>['entries']
+    entries?: Struct<T, S, R>['entries']
   }) {
     const {
       type,
@@ -120,9 +124,9 @@ export class Struct<T = unknown, S = unknown> {
  * Assert that a value passes a struct, throwing if it doesn't.
  */
 
-export function assert<T, S>(
+export function assert<T, S, R>(
   value: unknown,
-  struct: Struct<T, S>,
+  struct: Struct<T, S, R>,
   message?: string
 ): asserts value is T {
   const result = validate(value, struct, { message })
@@ -136,9 +140,9 @@ export function assert<T, S>(
  * Create a value with the coercion logic of struct and validate it.
  */
 
-export function create<T, S>(
+export function create<T, S, R>(
   value: unknown,
-  struct: Struct<T, S>,
+  struct: Struct<T, S, R>,
   message?: string
 ): T {
   const result = validate(value, struct, { coerce: true, message })
@@ -154,9 +158,9 @@ export function create<T, S>(
  * Mask a value, returning only the subset of properties defined by a struct.
  */
 
-export function mask<T, S>(
+export function mask<T, S, R>(
   value: unknown,
-  struct: Struct<T, S>,
+  struct: Struct<T, S, R>,
   message?: string
 ): T {
   const result = validate(value, struct, { coerce: true, mask: true, message })
@@ -172,7 +176,10 @@ export function mask<T, S>(
  * Check if a value passes a struct.
  */
 
-export function is<T, S>(value: unknown, struct: Struct<T, S>): value is T {
+export function is<T, S, R>(
+  value: unknown,
+  struct: Struct<T, S, R>
+): value is T {
   const result = validate(value, struct)
   return !result[0]
 }
@@ -182,9 +189,9 @@ export function is<T, S>(value: unknown, struct: Struct<T, S>): value is T {
  * value (with potential coercion) if valid.
  */
 
-export function validate<T, S>(
+export function validate<T, S, R>(
   value: unknown,
-  struct: Struct<T, S>,
+  struct: Struct<T, S, R>,
   options: {
     coerce?: boolean
     mask?: boolean
@@ -228,7 +235,12 @@ export type Context = {
  * A type utility to extract the type from a `Struct` class.
  */
 
-export type Infer<T extends Struct<any, any>> = T['TYPE']
+export type Infer<T extends Struct<any, any, any>> = T['TYPE']
+
+/**
+ * A type utility to extract the 'raw' type without any coerce from `Struct` class
+ */
+export type InferRaw<T extends Struct<any, any, any>> = T['TYPE_RAW']
 
 /**
  * A type utility to describe that a struct represents a TypeScript type.

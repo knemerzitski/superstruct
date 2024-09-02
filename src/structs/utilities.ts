@@ -1,6 +1,7 @@
 import { Context, Struct, Validator } from '../struct.js'
 import {
   Assign,
+  ObjectTypeRaw,
   ObjectSchema,
   ObjectType,
   PartialObjectSchema,
@@ -15,31 +16,36 @@ import { object, optional, type } from './types.js'
  */
 
 export function assign<A extends ObjectSchema, B extends ObjectSchema>(
-  A: Struct<ObjectType<A>, A>,
-  B: Struct<ObjectType<B>, B>
-): Struct<ObjectType<Assign<A, B>>, Assign<A, B>>
+  A: Struct<ObjectType<A>, A, ObjectTypeRaw<A>>,
+  B: Struct<ObjectType<B>, B, ObjectTypeRaw<B>>
+): Struct<ObjectType<Assign<A, B>>, Assign<A, B>, ObjectTypeRaw<Assign<A, B>>>
 export function assign<
   A extends ObjectSchema,
   B extends ObjectSchema,
   C extends ObjectSchema,
 >(
-  A: Struct<ObjectType<A>, A>,
-  B: Struct<ObjectType<B>, B>,
-  C: Struct<ObjectType<C>, C>
-): Struct<ObjectType<Assign<Assign<A, B>, C>>, Assign<Assign<A, B>, C>>
+  A: Struct<ObjectType<A>, A, ObjectTypeRaw<A>>,
+  B: Struct<ObjectType<B>, B, ObjectTypeRaw<B>>,
+  C: Struct<ObjectType<C>, C, ObjectTypeRaw<C>>
+): Struct<
+  ObjectType<Assign<Assign<A, B>, C>>,
+  Assign<Assign<A, B>, C>,
+  ObjectTypeRaw<Assign<Assign<A, B>, C>>
+>
 export function assign<
   A extends ObjectSchema,
   B extends ObjectSchema,
   C extends ObjectSchema,
   D extends ObjectSchema,
 >(
-  A: Struct<ObjectType<A>, A>,
-  B: Struct<ObjectType<B>, B>,
-  C: Struct<ObjectType<C>, C>,
-  D: Struct<ObjectType<D>, D>
+  A: Struct<ObjectType<A>, A, ObjectTypeRaw<A>>,
+  B: Struct<ObjectType<B>, B, ObjectTypeRaw<B>>,
+  C: Struct<ObjectType<C>, C, ObjectTypeRaw<C>>,
+  D: Struct<ObjectType<D>, D, ObjectTypeRaw<D>>
 ): Struct<
   ObjectType<Assign<Assign<Assign<A, B>, C>, D>>,
-  Assign<Assign<Assign<A, B>, C>, D>
+  Assign<Assign<Assign<A, B>, C>, D>,
+  ObjectTypeRaw<Assign<Assign<Assign<A, B>, C>, D>>
 >
 export function assign<
   A extends ObjectSchema,
@@ -48,14 +54,15 @@ export function assign<
   D extends ObjectSchema,
   E extends ObjectSchema,
 >(
-  A: Struct<ObjectType<A>, A>,
-  B: Struct<ObjectType<B>, B>,
-  C: Struct<ObjectType<C>, C>,
-  D: Struct<ObjectType<D>, D>,
-  E: Struct<ObjectType<E>, E>
+  A: Struct<ObjectType<A>, A, ObjectTypeRaw<A>>,
+  B: Struct<ObjectType<B>, B, ObjectTypeRaw<B>>,
+  C: Struct<ObjectType<C>, C, ObjectTypeRaw<C>>,
+  D: Struct<ObjectType<D>, D, ObjectTypeRaw<D>>,
+  E: Struct<ObjectType<E>, E, ObjectTypeRaw<E>>
 ): Struct<
   ObjectType<Assign<Assign<Assign<Assign<A, B>, C>, D>, E>>,
-  Assign<Assign<Assign<Assign<A, B>, C>, D>, E>
+  Assign<Assign<Assign<Assign<A, B>, C>, D>, E>,
+  ObjectTypeRaw<Assign<Assign<Assign<Assign<A, B>, C>, D>, E>>
 >
 export function assign(...Structs: Struct<any>[]): any {
   const isType = Structs[0].type === 'type'
@@ -68,7 +75,10 @@ export function assign(...Structs: Struct<any>[]): any {
  * Define a new struct type with a custom validation function.
  */
 
-export function define<T>(name: string, validator: Validator): Struct<T, null> {
+export function define<T, R = T>(
+  name: string,
+  validator: Validator
+): Struct<T, null, R> {
   return new Struct({ type: name, schema: null, validator })
 }
 
@@ -77,10 +87,10 @@ export function define<T>(name: string, validator: Validator): Struct<T, null> {
  * be `undefined`. `log` will be called if the value is not `undefined`.
  */
 
-export function deprecated<T>(
-  struct: Struct<T>,
+export function deprecated<T, R>(
+  struct: Struct<T, unknown, R>,
   log: (value: unknown, ctx: Context) => void
-): Struct<T> {
+): Struct<T, unknown, R> {
   return new Struct({
     ...struct,
     refiner: (value, ctx) => value === undefined || struct.refiner(value, ctx),
@@ -103,9 +113,9 @@ export function deprecated<T>(
  * validation logic that changes based on its input.
  */
 
-export function dynamic<T>(
-  fn: (value: unknown, ctx: Context) => Struct<T, any>
-): Struct<T, null> {
+export function dynamic<T, R>(
+  fn: (value: unknown, ctx: Context) => Struct<T, any, R>
+): Struct<T, null, R> {
   return new Struct({
     type: 'dynamic',
     schema: null,
@@ -137,8 +147,8 @@ export function dynamic<T>(
  * circular definition problem.
  */
 
-export function lazy<T>(fn: () => Struct<T, any>): Struct<T, null> {
-  let struct: Struct<T, any> | undefined
+export function lazy<T, R>(fn: () => Struct<T, any, R>): Struct<T, null, R> {
+  let struct: Struct<T, any, R> | undefined
   return new Struct({
     type: 'lazy',
     schema: null,
@@ -169,9 +179,9 @@ export function lazy<T>(fn: () => Struct<T, any>): Struct<T, null> {
  */
 
 export function omit<S extends ObjectSchema, K extends keyof S>(
-  struct: Struct<ObjectType<S>, S>,
+  struct: Struct<ObjectType<S>, S, ObjectTypeRaw<S>>,
   keys: K[]
-): Struct<ObjectType<Omit<S, K>>, Omit<S, K>> {
+): Struct<ObjectType<Omit<S, K>>, Omit<S, K>, ObjectTypeRaw<Omit<S, K>>> {
   const { schema } = struct
   const subschema: any = { ...schema }
 
@@ -195,8 +205,12 @@ export function omit<S extends ObjectSchema, K extends keyof S>(
  */
 
 export function partial<S extends ObjectSchema>(
-  struct: Struct<ObjectType<S>, S> | S
-): Struct<ObjectType<PartialObjectSchema<S>>, PartialObjectSchema<S>> {
+  struct: Struct<ObjectType<S>, S, ObjectTypeRaw<S>> | S
+): Struct<
+  ObjectType<PartialObjectSchema<S>>,
+  PartialObjectSchema<S>,
+  ObjectTypeRaw<PartialObjectSchema<S>>
+> {
   const isStruct = struct instanceof Struct
   const schema: any = isStruct ? { ...struct.schema } : { ...struct }
 
@@ -219,9 +233,9 @@ export function partial<S extends ObjectSchema>(
  */
 
 export function pick<S extends ObjectSchema, K extends keyof S>(
-  struct: Struct<ObjectType<S>, S>,
+  struct: Struct<ObjectType<S>, S, ObjectTypeRaw<S>>,
   keys: K[]
-): Struct<ObjectType<Pick<S, K>>, Pick<S, K>> {
+): Struct<ObjectType<Pick<S, K>>, Pick<S, K>, ObjectTypeRaw<Pick<S, K>>> {
   const { schema } = struct
   const subschema: any = {}
 
@@ -244,7 +258,10 @@ export function pick<S extends ObjectSchema, K extends keyof S>(
  * @deprecated This function has been renamed to `define`.
  */
 
-export function struct<T>(name: string, validator: Validator): Struct<T, null> {
+export function struct<T, R>(
+  name: string,
+  validator: Validator
+): Struct<T, null, R> {
   console.warn(
     'superstruct@0.11 - The `struct` helper has been renamed to `define`.'
   )

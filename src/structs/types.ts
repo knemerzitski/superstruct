@@ -1,4 +1,4 @@
-import { Infer, Struct } from '../struct.js'
+import { Infer, InferRaw, Struct } from '../struct.js'
 import { define } from './utilities.js'
 import {
   ObjectSchema,
@@ -10,6 +10,8 @@ import {
   AnyStruct,
   InferStructTuple,
   UnionToIntersection,
+  ObjectTypeRaw,
+  InferStructTupleRaw,
 } from '../utils.js'
 
 /**
@@ -28,7 +30,9 @@ export function any(): Struct<any, null> {
  * and it is preferred to using `array(any())`.
  */
 
-export function array<T extends Struct<any>>(Element: T): Struct<Infer<T>[], T>
+export function array<T extends Struct<any>>(
+  Element: T
+): Struct<Infer<T>[], T, InferRaw<T>[]>
 export function array(): Struct<unknown[], undefined>
 export function array<T extends Struct<any>>(Element?: T): any {
   return new Struct({
@@ -171,7 +175,11 @@ export function integer(): Struct<number, null> {
 
 export function intersection<A extends AnyStruct, B extends AnyStruct[]>(
   Structs: [A, ...B]
-): Struct<Infer<A> & UnionToIntersection<InferStructTuple<B>[number]>, null> {
+): Struct<
+  Infer<A> & UnionToIntersection<InferStructTuple<B>[number]>,
+  null,
+  InferRaw<A> & UnionToIntersection<InferStructTupleRaw<B>[number]>
+> {
   return new Struct({
     type: 'intersection',
     schema: null,
@@ -223,11 +231,14 @@ export function literal<T>(constant: T): any {
  */
 
 export function map(): Struct<Map<unknown, unknown>, null>
-export function map<K, V>(
+export function map<K, V, R>(
   Key: Struct<K>,
-  Value: Struct<V>
-): Struct<Map<K, V>, null>
-export function map<K, V>(Key?: Struct<K>, Value?: Struct<V>): any {
+  Value: Struct<V, unknown, R>
+): Struct<Map<K, V>, null, Map<K, R>>
+export function map<K, V, R>(
+  Key?: Struct<K>,
+  Value?: Struct<V, unknown, R>
+): any {
   return new Struct({
     type: 'map',
     schema: null,
@@ -263,7 +274,9 @@ export function never(): Struct<never, null> {
  * Augment an existing struct to allow `null` values.
  */
 
-export function nullable<T, S>(struct: Struct<T, S>): Struct<T | null, S> {
+export function nullable<T, S, R>(
+  struct: Struct<T, S, R>
+): Struct<T | null, S, R | null> {
   return new Struct({
     ...struct,
     validator: (value, ctx) => value === null || struct.validator(value, ctx),
@@ -294,7 +307,7 @@ export function number(): Struct<number, null> {
 export function object(): Struct<Record<string, unknown>, null>
 export function object<S extends ObjectSchema>(
   schema: S
-): Struct<ObjectType<S>, S>
+): Struct<ObjectType<S>, S, ObjectTypeRaw<S>>
 export function object<S extends ObjectSchema>(schema?: S): any {
   const knowns = schema ? Object.keys(schema) : []
   const Never = never()
@@ -348,7 +361,9 @@ export function object<S extends ObjectSchema>(schema?: S): any {
  * Augment a struct to allow `undefined` values.
  */
 
-export function optional<T, S>(struct: Struct<T, S>): Struct<T | undefined, S> {
+export function optional<T, S, R>(
+  struct: Struct<T, S, R>
+): Struct<T | undefined, S, R | undefined> {
   return new Struct({
     ...struct,
     validator: (value, ctx) =>
@@ -364,10 +379,10 @@ export function optional<T, S>(struct: Struct<T, S>): Struct<T | undefined, S> {
  * Like TypeScript's `Record` utility.
  */
 
-export function record<K extends string, V>(
+export function record<K extends string, V, R>(
   Key: Struct<K>,
-  Value: Struct<V>
-): Struct<Record<K, V>, null> {
+  Value: Struct<V, unknown, R>
+): Struct<Record<K, V>, null, Record<K, R>> {
   return new Struct({
     type: 'record',
     schema: null,
@@ -411,8 +426,10 @@ export function regexp(): Struct<RegExp, null> {
  */
 
 export function set(): Struct<Set<unknown>, null>
-export function set<T>(Element: Struct<T>): Struct<Set<T>, null>
-export function set<T>(Element?: Struct<T>): any {
+export function set<T, R>(
+  Element: Struct<T, unknown, R>
+): Struct<Set<T>, null, Set<R>>
+export function set<T, R>(Element?: Struct<T, unknown, R>): any {
   return new Struct({
     type: 'set',
     schema: null,
@@ -455,7 +472,11 @@ export function string(): Struct<string, null> {
 
 export function tuple<A extends AnyStruct, B extends AnyStruct[]>(
   Structs: [A, ...B]
-): Struct<[Infer<A>, ...InferStructTuple<B>], null> {
+): Struct<
+  [Infer<A>, ...InferStructTuple<B>],
+  null,
+  [InferRaw<A>, ...InferStructTupleRaw<B>]
+> {
   const Never = never()
 
   return new Struct({
@@ -491,7 +512,7 @@ export function tuple<A extends AnyStruct, B extends AnyStruct[]>(
 
 export function type<S extends ObjectSchema>(
   schema: S
-): Struct<ObjectType<S>, S> {
+): Struct<ObjectType<S>, S, ObjectTypeRaw<S>> {
   const keys = Object.keys(schema)
   return new Struct({
     type: 'type',
@@ -521,7 +542,11 @@ export function type<S extends ObjectSchema>(
 
 export function union<A extends AnyStruct, B extends AnyStruct[]>(
   Structs: [A, ...B]
-): Struct<Infer<A> | InferStructTuple<B>[number], null> {
+): Struct<
+  Infer<A> | InferStructTuple<B>[number],
+  null,
+  InferRaw<A> | InferStructTupleRaw<B>[number]
+> {
   const description = Structs.map((s) => s.type).join(' | ')
   return new Struct({
     type: 'union',

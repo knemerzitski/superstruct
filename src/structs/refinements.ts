@@ -8,7 +8,8 @@ import { toFailures } from '../utils.js'
 export function empty<
   T extends string | any[] | Map<any, any> | Set<any>,
   S extends any,
->(struct: Struct<T, S>): Struct<T, S> {
+  R extends any,
+>(struct: Struct<T, S, R>): Struct<T, S, R> {
   return refine(struct, 'empty', (value) => {
     const size = getSize(value)
     return (
@@ -30,13 +31,13 @@ function getSize(value: string | any[] | Map<any, any> | Set<any>): number {
  * Ensure that a number or date is below a threshold.
  */
 
-export function max<T extends number | Date, S extends any>(
-  struct: Struct<T, S>,
+export function max<T extends number | Date, S extends any, R extends any>(
+  struct: Struct<T, S, R>,
   threshold: T,
   options: {
     exclusive?: boolean
   } = {}
-): Struct<T, S> {
+): Struct<T, S, R> {
   const { exclusive } = options
   return refine(struct, 'max', (value) => {
     return exclusive
@@ -52,13 +53,13 @@ export function max<T extends number | Date, S extends any>(
  * Ensure that a number or date is above a threshold.
  */
 
-export function min<T extends number | Date, S extends any>(
-  struct: Struct<T, S>,
+export function min<T extends number | Date, S extends any, R extends any>(
+  struct: Struct<T, S, R>,
   threshold: T,
   options: {
     exclusive?: boolean
   } = {}
-): Struct<T, S> {
+): Struct<T, S, R> {
   const { exclusive } = options
   return refine(struct, 'min', (value) => {
     return exclusive
@@ -77,7 +78,8 @@ export function min<T extends number | Date, S extends any>(
 export function nonempty<
   T extends string | any[] | Map<any, any> | Set<any>,
   S extends any,
->(struct: Struct<T, S>): Struct<T, S> {
+  R extends any,
+>(struct: Struct<T, S, R>): Struct<T, S, R> {
   return refine(struct, 'nonempty', (value) => {
     const size = getSize(value)
     return (
@@ -90,10 +92,10 @@ export function nonempty<
  * Ensure that a string matches a regular expression.
  */
 
-export function pattern<T extends string, S extends any>(
-  struct: Struct<T, S>,
+export function pattern<T extends string, S extends any, R extends any>(
+  struct: Struct<T, S, R>,
   regexp: RegExp
-): Struct<T, S> {
+): Struct<T, S, R> {
   return refine(struct, 'pattern', (value) => {
     return (
       regexp.test(value) ||
@@ -109,7 +111,8 @@ export function pattern<T extends string, S extends any>(
 export function size<
   T extends string | number | Date | any[] | Map<any, any> | Set<any>,
   S extends any,
->(struct: Struct<T, S>, min: number, max: number = min): Struct<T, S> {
+  R extends any,
+>(struct: Struct<T, S, R>, min: number, max: number = min): Struct<T, S, R> {
   const expected = `Expected a ${struct.type}`
   const of = min === max ? `of \`${min}\`` : `between \`${min}\` and \`${max}\``
 
@@ -143,11 +146,11 @@ export function size<
  * allows you to layer additional validation on top of existing structs.
  */
 
-export function refine<T, S>(
-  struct: Struct<T, S>,
+export function refine<T, S, R>(
+  struct: Struct<T, S, R>,
   name: string,
   refiner: Refiner<T>
-): Struct<T, S> {
+): Struct<T, S, R> {
   return new Struct({
     ...struct,
     *refiner(value, ctx) {

@@ -1,4 +1,4 @@
-import { Struct, Infer, Result, Context, Describe } from './struct.js'
+import { Struct, Infer, Result, Context, Describe, InferRaw } from './struct.js'
 import { Failure } from './error.js'
 
 /**
@@ -64,10 +64,10 @@ export function shiftIterator<T>(input: Iterator<T>): T | undefined {
  * Convert a single validation result to a failure.
  */
 
-export function toFailure<T, S>(
+export function toFailure<T, S, R>(
   result: string | boolean | Partial<Failure>,
   context: Context,
-  struct: Struct<T, S>,
+  struct: Struct<T, S, R>,
   value: any
 ): Failure | undefined {
   if (result === true) {
@@ -103,10 +103,10 @@ export function toFailure<T, S>(
  * Convert a validation result to an iterable of failures.
  */
 
-export function* toFailures<T, S>(
+export function* toFailures<T, S, R>(
   result: Result,
   context: Context,
-  struct: Struct<T, S>,
+  struct: Struct<T, S, R>,
   value: any
 ): IterableIterator<Failure> {
   if (!isIterable(result)) {
@@ -127,9 +127,9 @@ export function* toFailures<T, S>(
  * returning an iterator of failures or success.
  */
 
-export function* run<T, S>(
+export function* run<T, S, R>(
   value: unknown,
-  struct: Struct<T, S>,
+  struct: Struct<T, S, R>,
   options: {
     path?: any[]
     branch?: any[]
@@ -284,6 +284,10 @@ export type ObjectType<S extends ObjectSchema> = Simplify<
   Optionalize<{ [K in keyof S]: Infer<S[K]> }>
 >
 
+export type ObjectTypeRaw<S extends ObjectSchema> = Simplify<
+  Optionalize<{ [K in keyof S]: InferRaw<S[K]> }>
+>
+
 /**
  * Omit properties from a type that extend from a specific type.
  */
@@ -305,7 +309,11 @@ export type Optionalize<S extends object> = OmitBy<S, undefined> &
  */
 
 export type PartialObjectSchema<S extends ObjectSchema> = {
-  [K in keyof S]: Struct<Infer<S[K]> | undefined>
+  [K in keyof S]: Struct<
+    Infer<S[K]> | undefined,
+    unknown,
+    InferRaw<S[K]> | undefined
+  >
 }
 
 /**
@@ -407,3 +415,20 @@ type _InferTuple<
 > = Index extends Length
   ? Accumulated
   : _InferTuple<Tuple, Length, [...Accumulated, Infer<Tuple[Index]>]>
+
+export type InferStructTupleRaw<
+  Tuple extends AnyStruct[],
+  Length extends number = Tuple['length'],
+> = Length extends Length
+  ? number extends Length
+    ? Tuple
+    : _InferTupleRaw<Tuple, Length, []>
+  : never
+type _InferTupleRaw<
+  Tuple extends AnyStruct[],
+  Length extends number,
+  Accumulated extends unknown[],
+  Index extends number = Accumulated['length'],
+> = Index extends Length
+  ? Accumulated
+  : _InferTupleRaw<Tuple, Length, [...Accumulated, InferRaw<Tuple[Index]>]>
