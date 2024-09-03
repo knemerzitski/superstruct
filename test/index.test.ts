@@ -25,7 +25,7 @@ describe('superstruct', () => {
 
         for (const name of tests) {
           const module = await import(resolve(testsDir, name))
-          const { Struct, data, create, only, skip, output, failures } = module
+          const { Struct, data, create, only, skip, output, failures, raw } = module
           const run = only ? it.only : skip ? it.skip : it
           run(name, () => {
             let actual
@@ -33,7 +33,7 @@ describe('superstruct', () => {
 
             try {
               if (create) {
-                actual = createValue(data, Struct)
+                actual = createValue(data, Struct, undefined, raw)
               } else {
                 assertValue(data, Struct)
                 actual = data

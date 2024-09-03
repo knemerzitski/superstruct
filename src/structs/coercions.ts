@@ -1,6 +1,6 @@
 import { Struct, is, Coercer } from '../struct.js'
 import { isPlainObject } from '../utils.js'
-import { string, unknown } from './types.js'
+import { boolean, number, string, unknown } from './types.js'
 
 /**
  * Augment a `Struct` to add an additional coercion step to its input.
@@ -16,10 +16,25 @@ import { string, unknown } from './types.js'
 export function coerce<T, S, C>(
   struct: Struct<T, S, any>,
   condition: Struct<C, any, any>,
-  coercer: Coercer<C>
+  coercer: Coercer<C>,
+  coercerRaw?: Coercer<T>
 ): Struct<T, S, C> {
   return new Struct({
     ...struct,
+    raw: coercerRaw
+      ? new Struct({
+          ...condition,
+          coercer: (value, ctx) => {
+            if (struct.raw && is(value, struct.raw)) {
+              value = struct.raw.coercer(value, ctx)
+            }
+
+            if (is(value, struct)) {
+              return coercerRaw(value, ctx)
+            }
+          },
+        })
+      : struct.raw,
     coercer: (value, ctx) => {
       return is(value, condition)
         ? struct.coercer(coercer(value, ctx), ctx)
@@ -66,7 +81,7 @@ export function defaulted<T, S, R>(
     }
 
     return x
-  }) as Struct<T, S, R>
+  }) as unknown as Struct<T, S, R>
 }
 
 /**
@@ -77,5 +92,5 @@ export function defaulted<T, S, R>(
  */
 
 export function trimmed<T, S, R>(struct: Struct<T, S, R>): Struct<T, S, R> {
-  return coerce(struct, string(), (x) => x.trim()) as Struct<T, S, R>
+  return coerce(struct, string(), (x) => x.trim()) as unknown as Struct<T, S, R>
 }

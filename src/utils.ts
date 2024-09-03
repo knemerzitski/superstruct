@@ -127,27 +127,38 @@ export function* toFailures<T, S, R>(
  * returning an iterator of failures or success.
  */
 
-export function* run<T, S, R>(
+export function* run<T, S, R, B extends boolean = false>(
   value: unknown,
   struct: Struct<T, S, R>,
   options: {
     path?: any[]
     branch?: any[]
+    raw?: B
     coerce?: boolean
     mask?: boolean
     message?: string
   } = {}
-): IterableIterator<[Failure, undefined] | [undefined, T]> {
-  const { path = [], branch = [value], coerce = false, mask = false } = options
+): IterableIterator<
+  [Failure, undefined] | [undefined, B extends true ? R : T]
+> {
+  const {
+    path = [],
+    branch = [value],
+    raw = false,
+    coerce = false,
+    mask = false,
+  } = options
   const ctx: Context = { path, branch, mask }
 
+  const validateStruct = raw ? (struct.raw ?? struct) : struct
+
   if (coerce) {
-    value = struct.coercer(value, ctx)
+    value = validateStruct.coercer(value, ctx)
   }
 
   let status: 'valid' | 'not_refined' | 'not_valid' = 'valid'
 
-  for (const failure of struct.validator(value, ctx)) {
+  for (const failure of validateStruct.validator(value, ctx)) {
     failure.explanation = options.message
     status = 'not_valid'
     yield [failure, undefined]
@@ -157,6 +168,7 @@ export function* run<T, S, R>(
     const ts = run(v, s as Struct, {
       path: k === undefined ? path : [...path, k],
       branch: k === undefined ? branch : [...branch, v],
+      raw: raw as B,
       coerce,
       mask,
       message: options.message,
@@ -191,7 +203,7 @@ export function* run<T, S, R>(
   }
 
   if (status === 'valid') {
-    yield [undefined, value as T]
+    yield [undefined, value as B extends true ? R : T]
   }
 }
 
