@@ -36,6 +36,7 @@
     "vitest": "^1.6.0"
   },
   "scripts": {
+    "prepare": "npm run build",
     "build": "rm -rf ./{dist} && rollup --config ./rollup.config.js",
     "clean": "rm -rf ./{dist,node_modules}",
     "fix": "npm run fix:eslint && npm run fix:prettier",
