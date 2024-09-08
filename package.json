@@ -1,9 +1,9 @@
 {
-  "name": "superstruct",
+  "name": "@knemerzitski/superstruct",
   "description": "A simple and composable way to validate data in JavaScript (and TypeScript).",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "license": "MIT",
-  "repository": "git://github.com/ianstormtaylor/superstruct.git",
+  "repository": "git://github.com/knemerzitski/superstruct.git",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -36,7 +36,6 @@
     "vitest": "^1.6.0"
   },
   "scripts": {
-    "prepare": "npm run build",
     "build": "rm -rf ./{dist} && rollup --config ./rollup.config.js",
     "clean": "rm -rf ./{dist,node_modules}",
     "fix": "npm run fix:eslint && npm run fix:prettier",
