@@ -123,11 +123,11 @@ export function* toFailures<T, S, R>(
 }
 
 function validationForKey(validation: any, key: string | number | undefined) {
-  //
   if (validation == null || key === undefined) return [true, null]
 
-  if (isPlainObject(validation) && validation[key]) {
-    return [true, validation[key]]
+  if (isPlainObject(validation)) {
+    const subValidation = typeof key === 'number' ? validation : validation[key]
+    return [subValidation != null, subValidation]
   }
 
   return [false, null]

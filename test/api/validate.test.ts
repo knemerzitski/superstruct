@@ -7,6 +7,7 @@ import {
   refine,
   object,
   any,
+  array,
 } from '../../src'
 
 describe('validate', () => {
@@ -144,5 +145,55 @@ describe('validate', () => {
     // Collect all failures. Ensures all validation runs.
     error?.failures()
     expect(ranRefiner).toBe(false)
+  })
+
+  it('validates using subset of the struct', () => {
+    const struct = object({
+      a: array(
+        object({
+          b: string(),
+          c: string(),
+        })
+      ),
+    })
+
+    const [error] = validate(
+      {
+        a: [
+          {
+            b: 'foo',
+          },
+        ],
+      },
+      struct,
+      {
+        validation: {
+          a: {
+            b: 1,
+            c: 1,
+          },
+        },
+      }
+    )
+    expect(error).toBeDefined()
+
+    const [noError] = validate(
+      {
+        a: [
+          {
+            b: 'foo',
+          },
+        ],
+      },
+      struct,
+      {
+        validation: {
+          a: {
+            b: 1,
+          },
+        },
+      }
+    )
+    expect(noError).toBeUndefined()
   })
 })
