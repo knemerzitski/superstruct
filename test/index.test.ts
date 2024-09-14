@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import {
   assert as assertValue,
   create as createValue,
+  createRaw as createRawValue,
   StructError,
 } from '../src'
 describe('superstruct', () => {
@@ -25,7 +26,8 @@ describe('superstruct', () => {
 
         for (const name of tests) {
           const module = await import(resolve(testsDir, name))
-          const { Struct, data, create, only, skip, output, failures, raw } = module
+          const { Struct, data, create, only, skip, output, failures, raw } =
+            module
           const run = only ? it.only : skip ? it.skip : it
           run(name, () => {
             let actual
@@ -33,7 +35,9 @@ describe('superstruct', () => {
 
             try {
               if (create) {
-                actual = createValue(data, Struct, undefined, raw)
+                actual = raw
+                  ? createRawValue(data, Struct, undefined)
+                  : createValue(data, Struct, undefined)
               } else {
                 assertValue(data, Struct)
                 actual = data
