@@ -72,24 +72,24 @@ export class Struct<T = unknown, S = unknown, R = T> {
    * Assert that a value passes the struct's validation, throwing if it doesn't.
    */
 
-  assert<B extends boolean = false>(
-    value: unknown,
-    message?: string,
-    raw?: B
-  ): asserts value is B extends true ? R : T {
-    return assert(value, this, message, raw)
+  assert(value: unknown, message?: string): asserts value is T {
+    return assert(value, this, message)
+  }
+
+  assertRaw(value: unknown, message?: string): asserts value is R {
+    return assertRaw(value, this, message)
   }
 
   /**
    * Create a value with the struct's coercion logic, then validate it.
    */
 
-  create<B extends boolean = false>(
-    value: unknown,
-    message?: string,
-    raw?: B
-  ): B extends true ? R : T {
-    return create(value, this, message, raw)
+  create(value: unknown, message?: string): T {
+    return create(value, this, message)
+  }
+
+  createRaw(value: unknown, message?: string): R {
+    return createRaw(value, this, message)
   }
 
   /**
@@ -97,10 +97,13 @@ export class Struct<T = unknown, S = unknown, R = T> {
    */
 
   is<B extends boolean = false>(
-    value: unknown,
-    raw?: B
+    value: unknown
   ): value is B extends true ? R : T {
-    return is(value, this, raw)
+    return is(value, this)
+  }
+
+  isRaw(value: unknown): value is R {
+    return isRaw(value, this)
   }
 
   /**
@@ -109,12 +112,12 @@ export class Struct<T = unknown, S = unknown, R = T> {
    * props of `object` structs only.
    */
 
-  mask<B extends boolean = false>(
-    value: unknown,
-    message?: string,
-    raw?: B
-  ): B extends true ? R : T {
-    return mask(value, this, message, raw)
+  mask(value: unknown, message?: string): T {
+    return mask(value, this, message)
+  }
+
+  maskRaw(value: unknown, message?: string): R {
+    return maskRaw(value, this, message)
   }
 
   /**
@@ -145,13 +148,24 @@ export class Struct<T = unknown, S = unknown, R = T> {
  * Assert that a value passes a struct, throwing if it doesn't.
  */
 
-export function assert<T, S, R, B extends boolean = false>(
+export function assert<T, S, R>(
   value: unknown,
   struct: Struct<T, S, R>,
-  message?: string,
-  raw?: B
-): asserts value is B extends true ? R : T {
-  const result = validate(value, struct, { raw, message })
+  message?: string
+): asserts value is T {
+  const result = validate(value, struct, { message })
+
+  if (result[0]) {
+    throw result[0]
+  }
+}
+
+export function assertRaw<T, S, R>(
+  value: unknown,
+  struct: Struct<T, S, R>,
+  message?: string
+): asserts value is R {
+  const result = validate(value, struct, { raw: true, message })
 
   if (result[0]) {
     throw result[0]
@@ -162,13 +176,26 @@ export function assert<T, S, R, B extends boolean = false>(
  * Create a value with the coercion logic of struct and validate it.
  */
 
-export function create<T, S, R, B extends boolean = false>(
+export function create<T, S, R>(
   value: unknown,
   struct: Struct<T, S, R>,
-  message?: string,
-  raw?: B
-): B extends true ? R : T {
-  const result = validate(value, struct, { raw, coerce: true, message })
+  message?: string
+): T {
+  const result = validate(value, struct, { coerce: true, message })
+
+  if (result[0]) {
+    throw result[0]
+  } else {
+    return result[1]
+  }
+}
+
+export function createRaw<T, S, R>(
+  value: unknown,
+  struct: Struct<T, S, R>,
+  message?: string
+): R {
+  const result = validate(value, struct, { raw: true, coerce: true, message })
 
   if (result[0]) {
     throw result[0]
@@ -181,14 +208,31 @@ export function create<T, S, R, B extends boolean = false>(
  * Mask a value, returning only the subset of properties defined by a struct.
  */
 
-export function mask<T, S, R, B extends boolean = false>(
+export function mask<T, S, R>(
   value: unknown,
   struct: Struct<T, S, R>,
-  message?: string,
-  raw?: B
-): B extends true ? R : T {
+  message?: string
+): T {
   const result = validate(value, struct, {
-    raw,
+    coerce: true,
+    mask: true,
+    message,
+  })
+
+  if (result[0]) {
+    throw result[0]
+  } else {
+    return result[1]
+  }
+}
+
+export function maskRaw<T, S, R>(
+  value: unknown,
+  struct: Struct<T, S, R>,
+  message?: string
+): R {
+  const result = validate(value, struct, {
+    raw: true,
     coerce: true,
     mask: true,
     message,
@@ -205,12 +249,19 @@ export function mask<T, S, R, B extends boolean = false>(
  * Check if a value passes a struct.
  */
 
-export function is<T, S, R, B extends boolean = false>(
+export function is<T, S, R>(
   value: unknown,
-  struct: Struct<T, S, R>,
-  raw?: B
-): value is B extends true ? R : T {
-  const result = validate(value, struct, { raw })
+  struct: Struct<T, S, R>
+): value is T {
+  const result = validate(value, struct)
+  return !result[0]
+}
+
+export function isRaw<T, S, R>(
+  value: unknown,
+  struct: Struct<T, S, R>
+): value is R {
+  const result = validate(value, struct, { raw: true })
   return !result[0]
 }
 
