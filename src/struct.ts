@@ -130,6 +130,7 @@ export class Struct<T = unknown, S = unknown, R = T> {
   validate<B extends boolean = false>(
     value: unknown,
     options: {
+      validation?: any
       raw?: B
       coerce?: boolean
       mask?: boolean
@@ -222,6 +223,7 @@ export function validate<T, S, R, B extends boolean = false>(
   value: unknown,
   struct: Struct<T, S, R>,
   options: {
+    validation?: any
     raw?: B
     coerce?: boolean
     mask?: boolean

@@ -122,6 +122,17 @@ export function* toFailures<T, S, R>(
   }
 }
 
+function validationForKey(validation: any, key: string | number | undefined) {
+  //
+  if (validation == null || key === undefined) return [true, null]
+
+  if (isPlainObject(validation) && validation[key]) {
+    return [true, validation[key]]
+  }
+
+  return [false, null]
+}
+
 /**
  * Check a value against a struct, traversing deeply into nested values, and
  * returning an iterator of failures or success.
@@ -133,6 +144,7 @@ export function* run<T, S, R, B extends boolean = false>(
   options: {
     path?: any[]
     branch?: any[]
+    validation?: any
     raw?: B
     coerce?: boolean
     mask?: boolean
@@ -144,6 +156,7 @@ export function* run<T, S, R, B extends boolean = false>(
   const {
     path = [],
     branch = [value],
+    validation,
     raw = false,
     coerce = false,
     mask = false,
@@ -165,9 +178,15 @@ export function* run<T, S, R, B extends boolean = false>(
   }
 
   for (let [k, v, s] of struct.entries(value, ctx)) {
+    const [keepValidating, subValidation] = validationForKey(validation, k)
+    if (!keepValidating) {
+      continue
+    }
+
     const ts = run(v, s as Struct, {
       path: k === undefined ? path : [...path, k],
       branch: k === undefined ? branch : [...branch, v],
+      validation: subValidation,
       raw: raw as B,
       coerce,
       mask,
