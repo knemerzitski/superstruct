@@ -96,9 +96,7 @@ export class Struct<T = unknown, S = unknown, R = T> {
    * Check if a value passes the struct's validation.
    */
 
-  is<B extends boolean = false>(
-    value: unknown
-  ): value is B extends true ? R : T {
+  is(value: unknown): value is T {
     return is(value, this)
   }
 
