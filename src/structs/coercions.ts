@@ -1,6 +1,6 @@
 import { Struct, is, Coercer } from '../struct.js'
 import { isPlainObject } from '../utils.js'
-import { boolean, number, string, unknown } from './types.js'
+import { string, unknown } from './types.js'
 
 /**
  * Augment a `Struct` to add an additional coercion step to its input.
