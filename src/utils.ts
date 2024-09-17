@@ -161,7 +161,7 @@ export function* run<T, S, R, B extends boolean = false>(
     coerce = false,
     mask = false,
   } = options
-  const ctx: Context = { path, branch, mask }
+  const ctx: Context = { path, branch, mask, raw }
 
   const validateStruct = raw ? (struct.raw ?? struct) : struct
 

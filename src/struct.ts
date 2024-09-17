@@ -310,6 +310,7 @@ export type Context = {
   branch: Array<any>
   path: Array<any>
   mask?: boolean
+  raw?: boolean
 }
 
 /**

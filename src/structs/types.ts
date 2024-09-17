@@ -556,6 +556,7 @@ export function union<A extends AnyStruct, B extends AnyStruct[]>(
         const [error, coerced] = S.validate(value, {
           coerce: true,
           mask: ctx.mask,
+          raw: ctx.raw,
         })
         if (!error) {
           return coerced
