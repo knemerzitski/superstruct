@@ -32,6 +32,8 @@ export function coerce<T, S, C>(
             if (is(value, struct)) {
               return coercerRaw(value, ctx)
             }
+
+            return value
           },
         })
       : struct.raw,
