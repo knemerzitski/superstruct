@@ -163,15 +163,15 @@ export function* run<T, S, R, B extends boolean = false>(
   } = options
   const ctx: Context = { path, branch, mask, raw }
 
-  const validateStruct = raw ? (struct.raw ?? struct) : struct
+  struct = raw ? ((struct.raw as Struct<any, any>) ?? struct) : struct
 
   if (coerce) {
-    value = validateStruct.coercer(value, ctx)
+    value = struct.coercer(value, ctx)
   }
 
   let status: 'valid' | 'not_refined' | 'not_valid' = 'valid'
 
-  for (const failure of validateStruct.validator(value, ctx)) {
+  for (const failure of struct.validator(value, ctx)) {
     failure.explanation = options.message
     status = 'not_valid'
     yield [failure, undefined]
