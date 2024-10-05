@@ -2,6 +2,7 @@
   "name": "@knemerzitski/superstruct",
   "description": "A simple and composable way to validate data in JavaScript (and TypeScript).",
   "version": "2.2.5",
+  "versionUpstream": "2.0.2",
   "license": "MIT",
   "repository": "git://github.com/knemerzitski/superstruct.git",
   "type": "module",
